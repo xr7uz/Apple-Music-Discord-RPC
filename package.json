@@ -1,0 +1,24 @@
+{
+  "name": "apple-music-discord-rpc",
+  "version": "1.0.0",
+  "description": "Apple Music → Discord Rich Presence for macOS. Zero runtime dependencies.",
+  "license": "MIT",
+  "author": "xr7uz (https://xr7uz.xyz)",
+  "repository": "github:xr7uz/apple-music-discord-rpc",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file-if-exists=.env src/main.ts",
+    "check": "tsc",
+    "test": "node --disable-warning=ExperimentalWarning --test \"test/**/*.test.ts\"",
+    "agent:install": "sh scripts/install.sh",
+    "agent:uninstall": "sh scripts/uninstall.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "^7.0.2"
+  }
+}
