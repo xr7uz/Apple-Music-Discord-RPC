@@ -109,8 +109,6 @@ export class WindowsPlayer implements Player {
   readonly #estimator = new PositionEstimator();
   #process: ChildProcessWithoutNullStreams | undefined;
   #queue: Pending[] = [];
-  #stdout = "";
-  #stderr = "";
 
   constructor({ app = DEFAULT_WINDOWS_APP, start, timeoutMs = 15_000 }: WindowsPlayerOptions = {}) {
     this.#timeoutMs = timeoutMs;
@@ -129,17 +127,19 @@ export class WindowsPlayer implements Player {
 
     const child = this.#start();
     this.#process = child;
-    this.#stdout = "";
-    this.#stderr = "";
+    let stdout = "";
+    let stderr = "";
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
 
     child.stdout.on("data", (chunk: string) => {
-      this.#stdout += chunk;
+      // late output of a helper we already replaced must not answer the new one's requests
+      if (this.#process !== child) return;
+      stdout += chunk;
       let newline: number;
-      while ((newline = this.#stdout.indexOf("\n")) !== -1) {
-        const line = this.#stdout.slice(0, newline).replace(/^﻿/, "").trim();
-        this.#stdout = this.#stdout.slice(newline + 1);
+      while ((newline = stdout.indexOf("\n")) !== -1) {
+        const line = stdout.slice(0, newline).replace(/^\uFEFF/, "").trim();
+        stdout = stdout.slice(newline + 1);
         if (!line) continue;
         const pending = this.#queue.shift();
         if (!pending) continue;
@@ -153,13 +153,13 @@ export class WindowsPlayer implements Player {
     });
 
     child.stderr.on("data", (chunk: string) => {
-      this.#stderr = (this.#stderr + chunk).slice(-2_000);
+      stderr = (stderr + chunk).slice(-2_000);
     });
 
     const fail = (reason: string) => {
       if (this.#process !== child) return;
       this.#process = undefined;
-      const detail = this.#stderr.trim().split("\n").find((l) => l.trim()) ?? "";
+      const detail = stderr.trim().split("\n").find((l) => l.trim()) ?? "";
       const error = new Error(`PowerShell media helper ${reason}${detail ? `: ${detail.trim()}` : ""}`);
       for (const pending of this.#queue.splice(0)) {
         clearTimeout(pending.timer);
