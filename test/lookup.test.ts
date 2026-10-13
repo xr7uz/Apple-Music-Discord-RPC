@@ -14,7 +14,7 @@ import {
   toExtras,
   type TrackExtras,
 } from "../src/lookup.ts";
-import type { Track } from "../src/music.ts";
+import type { Track } from "../src/player.ts";
 
 const track: Track = { id: "A1B2", name: "Midnight Drive (feat. Someone)", artist: "Neon Coast", album: "Afterglow (Deluxe Edition)" };
 
@@ -26,6 +26,7 @@ const result = (overrides: Partial<CatalogResult>): CatalogResult => ({
   trackViewUrl: "https://music.apple.com/us/album/midnight-drive/111?i=222&uo=4",
   collectionViewUrl: "https://music.apple.com/us/album/afterglow/111?i=222&uo=4",
   artistViewUrl: "https://music.apple.com/us/artist/neon-coast/333?uo=4",
+  trackTimeMillis: 211_500,
   ...overrides,
 });
 
@@ -75,6 +76,7 @@ describe("toExtras", () => {
       trackUrl: "https://music.apple.com/us/album/midnight-drive/111?i=222",
       albumUrl: "https://music.apple.com/us/album/afterglow/111",
       artistUrl: "https://music.apple.com/us/artist/neon-coast/333",
+      durationMs: 211_500,
     });
   });
 });
@@ -90,10 +92,8 @@ describe("ExtrasResolver", () => {
     const cache = new JsonCache<TrackExtras>(join(dir, `${Math.random()}.json`));
     const resolver = new ExtrasResolver({
       cache,
-      app: "Music",
       countries: ["de", "us"],
-      uploadArtwork: upload !== undefined,
-      upload,
+      uploadArtwork: upload,
       fetch: async (input) => {
         const url = new URL(String(input));
         const country = url.searchParams.get("country")!;

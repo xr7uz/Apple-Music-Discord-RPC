@@ -1,28 +1,11 @@
 /**
- * Talks to Music.app (or iTunes) through osascript.
+ * macOS backend: talks to Music.app (or iTunes) through osascript.
  * All scripts are plain ES5 so they also run on older JavaScriptCore versions.
  */
 import { execFile } from "node:child_process";
+import type { Player, Snapshot } from "./player.ts";
 
-export type PlayerApp = "Music" | "iTunes";
-export type PlayerState = "closed" | "stopped" | "playing" | "paused";
-
-export interface Track {
-  /** Persistent library id, stable across restarts. */
-  id: string;
-  name: string;
-  artist: string;
-  album: string;
-  /** Seconds. Missing for radio streams. */
-  duration?: number;
-}
-
-export interface Snapshot {
-  state: PlayerState;
-  /** Seconds into the current track. */
-  position?: number;
-  track?: Track;
-}
+export type MacApp = "Music" | "iTunes";
 
 function osascript(args: string[], timeoutMs = 10_000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -79,18 +62,39 @@ const SNAPSHOT = `function (appName) {
   };
 }`;
 
-export function readSnapshot(app: PlayerApp): Promise<Snapshot> {
-  return runJxa<Snapshot>(SNAPSHOT, [app]);
+/** Music.app replaced iTunes in macOS 10.15 Catalina. */
+export function playerForMacOS(version: string): MacApp {
+  const [major = 0, minor = 0] = version.split(".").map(Number);
+  return major > 10 || (major === 10 && minor >= 15) ? "Music" : "iTunes";
 }
 
-/**
- * Writes the current track's embedded artwork to `outPath`.
- * Uses AppleScript because it can write raw picture data straight to disk.
- */
-export async function exportArtwork(app: PlayerApp, outPath: string): Promise<boolean> {
-  // `app` is one of two literals, so interpolating it is safe
-  const script = `on run argv
-  tell application "${app}"
+export function detectMacApp(): Promise<MacApp> {
+  return new Promise((resolve, reject) => {
+    execFile("sw_vers", ["-productVersion"], (error, stdout) => {
+      if (error) reject(new Error(`Could not read the macOS version: ${error.message}`));
+      else resolve(playerForMacOS(stdout.trim()));
+    });
+  });
+}
+
+export class MacPlayer implements Player {
+  readonly app: MacApp;
+  readonly name: string;
+
+  constructor(app: MacApp) {
+    this.app = app;
+    this.name = app;
+  }
+
+  snapshot(): Promise<Snapshot> {
+    return runJxa<Snapshot>(SNAPSHOT, [this.app]);
+  }
+
+  /** AppleScript, because it can write raw picture data straight to disk. */
+  async exportArtwork(outPath: string): Promise<boolean> {
+    // `app` is one of two literals, so interpolating it is safe
+    const script = `on run argv
+  tell application "${this.app}"
     if (count of artworks of current track) is 0 then return "none"
     set artData to raw data of artwork 1 of current track
   end tell
@@ -105,20 +109,13 @@ export async function exportArtwork(app: PlayerApp, outPath: string): Promise<bo
   end try
   return "ok"
 end run`;
-  return (await osascript(["-e", script, outPath])) === "ok";
-}
+    return (await osascript(["-e", script, outPath])) === "ok";
+  }
 
-/** Music.app replaced iTunes in macOS 10.15 Catalina. */
-export function playerForMacOS(version: string): PlayerApp {
-  const [major = 0, minor = 0] = version.split(".").map(Number);
-  return major > 10 || (major === 10 && minor >= 15) ? "Music" : "iTunes";
-}
+  explain(message: string): string {
+    if (!message.includes("-1743")) return message;
+    return `${message}\n  → allow "node" to control ${this.app} and System Events in System Settings › Privacy & Security › Automation`;
+  }
 
-export function detectPlayerApp(): Promise<PlayerApp> {
-  return new Promise((resolve, reject) => {
-    execFile("sw_vers", ["-productVersion"], (error, stdout) => {
-      if (error) reject(new Error(`Could not read the macOS version: ${error.message}`));
-      else resolve(playerForMacOS(stdout.trim()));
-    });
-  });
+  close(): void {}
 }

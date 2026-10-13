@@ -9,13 +9,19 @@ interface Entry<T> {
   expiresAt: number;
 }
 
-/** Default cache location: ~/Library/Caches on macOS, XDG cache dir elsewhere. */
-export function defaultCacheFile(name: string): string {
+/** Per-user data folder: ~/Library/Caches on macOS, %LOCALAPPDATA% on Windows, XDG elsewhere. */
+export function dataDir(): string {
   const base =
     process.platform === "darwin"
       ? join(homedir(), "Library", "Caches")
-      : (process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"));
-  return join(base, "apple-music-discord-rpc", name);
+      : process.platform === "win32"
+        ? (process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"))
+        : (process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"));
+  return join(base, "apple-music-discord-rpc");
+}
+
+export function defaultCacheFile(name: string): string {
+  return join(dataDir(), name);
 }
 
 /** Small persistent key/value cache with per-entry expiry, stored as one JSON file. */

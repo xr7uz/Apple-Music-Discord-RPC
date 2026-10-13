@@ -1,11 +1,14 @@
-import type { PlayerApp } from "./music.ts";
+import type { MacApp } from "./macos.ts";
+import { DEFAULT_WINDOWS_APP } from "./windows.ts";
 
 export const BUTTON_KINDS = ["apple", "spotify", "youtube"] as const;
 export type ButtonKind = (typeof BUTTON_KINDS)[number];
 
 export interface Config {
-  /** Force "Music" or "iTunes" instead of detecting it from the macOS version. */
-  app?: PlayerApp;
+  /** macOS: force "Music" or "iTunes" instead of detecting it from the macOS version. */
+  app?: MacApp;
+  /** Windows: regex for the media session's app id. */
+  windowsApp: string;
   /** Discord application id. Defaults to one matching the player app. */
   clientId?: string;
   /** Apple Music storefront used for catalog lookups and links. */
@@ -20,6 +23,8 @@ export interface Config {
   pollMs: number;
   /** Poll interval while the player or Discord is closed. */
   idleMs: number;
+  /** Append logs to this file instead of stdout (the hidden Windows launcher sets it). */
+  logFile?: string;
   debug: boolean;
 }
 
@@ -53,7 +58,7 @@ export function loadConfig(env: Env = process.env, warn: Warn = console.warn): C
     return fallback;
   };
 
-  let app: PlayerApp | undefined;
+  let app: MacApp | undefined;
   const rawApp = read("APP")?.toLowerCase();
   if (rawApp === "music") app = "Music";
   else if (rawApp === "itunes") app = "iTunes";
@@ -85,8 +90,17 @@ export function loadConfig(env: Env = process.env, warn: Warn = console.warn): C
     }
   }
 
+  let windowsApp = read("WINDOWS_APP") ?? DEFAULT_WINDOWS_APP;
+  try {
+    new RegExp(windowsApp);
+  } catch {
+    warn(`MUSIC_RPC_WINDOWS_APP="${windowsApp}" is not a valid regex, using "${DEFAULT_WINDOWS_APP}"`);
+    windowsApp = DEFAULT_WINDOWS_APP;
+  }
+
   return {
     app,
+    windowsApp,
     clientId,
     country,
     buttons,
@@ -94,6 +108,7 @@ export function loadConfig(env: Env = process.env, warn: Warn = console.warn): C
     uploadArtwork: bool("UPLOAD_ARTWORK", true),
     pollMs: ms("POLL_MS", 5_000, 1_000),
     idleMs: ms("IDLE_MS", 15_000, 1_000),
+    logFile: read("LOG_FILE"),
     debug: bool("DEBUG", false),
   };
 }

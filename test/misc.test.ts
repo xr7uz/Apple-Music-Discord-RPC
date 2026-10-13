@@ -6,13 +6,14 @@ import { after, describe, it } from "node:test";
 import { detectImage } from "../src/artwork.ts";
 import { JsonCache } from "../src/cache.ts";
 import { loadConfig } from "../src/config.ts";
-import { playerForMacOS } from "../src/music.ts";
+import { playerForMacOS } from "../src/macos.ts";
 
 describe("loadConfig", () => {
   it("has sensible defaults", () => {
     const config = loadConfig({}, assert.fail);
     assert.deepEqual(config, {
       app: undefined,
+      windowsApp: "AppleMusic|iTunes",
       clientId: undefined,
       country: "us",
       buttons: ["apple", "spotify"],
@@ -20,6 +21,7 @@ describe("loadConfig", () => {
       uploadArtwork: true,
       pollMs: 5_000,
       idleMs: 15_000,
+      logFile: undefined,
       debug: false,
     });
   });

@@ -20,3 +20,47 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: sh -n scripts/install.sh && sh -n scripts/uninstall.sh
+      - name: PowerShell scripts parse and stay ASCII (Windows PowerShell 5.1 reads them as ANSI)
+        run: |
+          if grep -nP '[^\x00-\x7F]' scripts/*.ps1 src/*.ps1; then exit 1; fi
+          pwsh -NoProfile -Command '
+            $failed = $false
+            foreach ($file in Get-ChildItem scripts/*.ps1, src/*.ps1) {
+              $tokens = $null; $errors = $null
+              [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$errors)
+              foreach ($e in $errors) { Write-Host "$($file.Name): $e"; $failed = $true }
+            }
+            if ($failed) { exit 1 }'
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+      - name: media helper runs in Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $out = '{"cmd":"snapshot"}' | powershell -NoProfile -ExecutionPolicy Bypass -File src\windows-media.ps1
+          "helper answered: $out"
+          if ($out -notmatch '"state"') { exit 1 }
+
+      - name: install, run and uninstall the autostart entry
+        shell: powershell
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install.ps1
+          if ($LASTEXITCODE) { exit 1 }
+          $log = Join-Path $env:LOCALAPPDATA 'apple-music-discord-rpc\music-rpc.log'
+          for ($i = 0; $i -lt 30 -and -not (Test-Path $log); $i++) { Start-Sleep -Seconds 1 }
+          Start-Sleep -Seconds 3
+          Get-Content $log
+          if (-not (Select-String -Path $log -Pattern 'waiting for Discord' -Quiet)) { exit 1 }
+          powershell -NoProfile -ExecutionPolicy Bypass -File scripts\uninstall.ps1
+          $left = Get-CimInstance Win32_Process -Filter "Name = 'node.exe' OR Name = 'wscript.exe'" |
+            Where-Object { $_.CommandLine -like '*apple-music-discord-rpc*' -or $_.CommandLine -like '*src\main.ts*' }
+          if ($left) { $left | Format-List Name, CommandLine; exit 1 }

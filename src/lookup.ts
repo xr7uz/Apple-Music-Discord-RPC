@@ -1,14 +1,16 @@
 /** Finds artwork and Apple Music links for a track via the public iTunes Search API. */
-import { uploadLocalArtwork, type UploadedArtwork } from "./artwork.ts";
+import type { UploadedArtwork } from "./artwork.ts";
 import type { JsonCache } from "./cache.ts";
 import { log } from "./log.ts";
-import type { PlayerApp, Track } from "./music.ts";
+import type { Track } from "./player.ts";
 
 export interface TrackExtras {
   artworkUrl?: string;
   trackUrl?: string;
   albumUrl?: string;
   artistUrl?: string;
+  /** Catalog track length, for players that don't report one. */
+  durationMs?: number;
 }
 
 export interface CatalogResult {
@@ -19,6 +21,7 @@ export interface CatalogResult {
   trackViewUrl?: string;
   collectionViewUrl?: string;
   artistViewUrl?: string;
+  trackTimeMillis?: number;
 }
 
 const HOUR = 60 * 60 * 1000;
@@ -111,6 +114,7 @@ export function toExtras(result: CatalogResult): TrackExtras {
     // song results point the album link at the song too
     albumUrl: link(result.collectionViewUrl, "i"),
     artistUrl: link(result.artistViewUrl),
+    durationMs: result.trackTimeMillis && result.trackTimeMillis > 0 ? result.trackTimeMillis : undefined,
   };
 }
 
@@ -122,28 +126,25 @@ export function searchUrl(track: Track, country: string): string {
 
 export interface ResolverOptions {
   cache: JsonCache<TrackExtras>;
-  app: PlayerApp;
   /** Storefronts to try, in order. */
   countries: string[];
-  uploadArtwork: boolean;
+  /** Uploads the current track's own artwork, used when the catalog has none. */
+  uploadArtwork?: () => Promise<UploadedArtwork | undefined>;
   fetch?: typeof fetch;
-  upload?: (app: PlayerApp) => Promise<UploadedArtwork | undefined>;
 }
 
 export class ExtrasResolver {
   readonly #options: ResolverOptions;
   readonly #fetch: typeof fetch;
-  readonly #upload: (app: PlayerApp) => Promise<UploadedArtwork | undefined>;
 
   constructor(options: ResolverOptions) {
     this.#options = options;
     this.#fetch = options.fetch ?? fetch;
-    this.#upload = options.upload ?? uploadLocalArtwork;
   }
 
   /** Cached lookup. Never throws: a failed lookup just means fewer extras. */
   async resolve(track: Track): Promise<TrackExtras> {
-    const { cache, app, uploadArtwork } = this.#options;
+    const { cache, uploadArtwork } = this.#options;
     const cached = cache.get(track.id);
     if (cached) return cached;
 
@@ -160,7 +161,7 @@ export class ExtrasResolver {
 
     if (!extras.artworkUrl && uploadArtwork) {
       try {
-        const uploaded = await this.#upload(app);
+        const uploaded = await uploadArtwork();
         if (uploaded) {
           extras.artworkUrl = uploaded.url;
           ttl = Math.min(ttl, uploaded.expiresAt - Date.now() - TTL.uploadMargin);

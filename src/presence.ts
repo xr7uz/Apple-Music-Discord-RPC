@@ -2,7 +2,7 @@
 import type { ButtonKind } from "./config.ts";
 import { type Activity, ActivityType, StatusDisplay } from "./discord.ts";
 import { cleanTitle, type TrackExtras } from "./lookup.ts";
-import type { Track } from "./music.ts";
+import type { Track } from "./player.ts";
 
 /** Small round badge on the cover: hovering shows the text, clicking opens the repo. */
 export const CREDIT = {
@@ -54,8 +54,8 @@ export function buttonFor(kind: ButtonKind, track: Track, extras: TrackExtras): 
 export interface PresenceInput {
   track: Track;
   state: "playing" | "paused";
-  /** Seconds into the track. */
-  position: number;
+  /** Seconds into the track. Without it there is no progress bar. */
+  position?: number;
   extras: TrackExtras;
   buttons: ButtonKind[];
   now?: number;
@@ -75,11 +75,14 @@ export function buildActivity({ track, state, position, extras, buttons, now = D
     activity.status_display_type = StatusDisplay.State;
   }
 
-  if (state === "playing") {
-    const start = Math.round(now - position * 1000);
+  const duration = track.duration ?? (extras.durationMs ? extras.durationMs / 1000 : undefined);
+  if (state === "playing" && position !== undefined) {
+    // an estimated position can run past the end on repeat-one, wrap it around
+    const elapsed = duration && position > duration ? position % duration : position;
+    const start = Math.round(now - elapsed * 1000);
     activity.timestamps = { start };
-    if (track.duration && track.duration > 0) {
-      activity.timestamps.end = Math.round(start + track.duration * 1000);
+    if (duration && duration > 0) {
+      activity.timestamps.end = Math.round(start + duration * 1000);
     }
   }
 

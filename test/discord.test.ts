@@ -4,7 +4,7 @@ import { createServer, type Server, type Socket } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
-import { DiscordClient, encodeFrame, type Frame, FrameDecoder, Op } from "../src/discord.ts";
+import { DiscordClient, encodeFrame, type Frame, FrameDecoder, ipcSocketPaths, Op } from "../src/discord.ts";
 
 type Handler = (socket: Socket, frame: Frame) => void;
 
@@ -57,7 +57,15 @@ describe("FrameDecoder", () => {
   });
 });
 
-describe("DiscordClient", () => {
+describe("ipcSocketPaths", () => {
+  it("uses named pipes on Windows", () => {
+    const paths = ipcSocketPaths("win32");
+    assert.equal(paths.length, 10);
+    assert.equal(paths[0], "\\\\?\\pipe\\discord-ipc-0");
+  });
+});
+
+describe("DiscordClient", { skip: process.platform === "win32" && "uses unix sockets" }, () => {
   const originalRuntimeDir = process.env.XDG_RUNTIME_DIR;
 
   before(() => {

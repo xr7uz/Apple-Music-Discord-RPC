@@ -78,7 +78,10 @@ function ipcDirectories(): string[] {
   if (process.platform === "darwin" && !env.TMPDIR) {
     // launchd normally sets TMPDIR, but ask the system if it didn't
     try {
-      darwinTempDir ??= execFileSync("getconf", ["DARWIN_USER_TEMP_DIR"], { encoding: "utf8" }).trim();
+      darwinTempDir ??= execFileSync("getconf", ["DARWIN_USER_TEMP_DIR"], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }).trim();
       dirs.push(darwinTempDir);
     } catch {
       // ignore, fall back to /tmp
@@ -88,8 +91,14 @@ function ipcDirectories(): string[] {
   return [...new Set(dirs.filter((dir): dir is string => Boolean(dir)))];
 }
 
-/** Existing Discord IPC socket paths, in the order clients are expected to try them. */
-export function ipcSocketPaths(): string[] {
+/**
+ * Discord IPC endpoints in the order clients are expected to try them: named
+ * pipes on Windows, existing unix sockets everywhere else.
+ */
+export function ipcSocketPaths(platform: NodeJS.Platform = process.platform): string[] {
+  if (platform === "win32") {
+    return Array.from({ length: 10 }, (_, i) => `\\\\?\\pipe\\discord-ipc-${i}`);
+  }
   const paths: string[] = [];
   for (const dir of ipcDirectories()) {
     for (let i = 0; i < 10; i++) {

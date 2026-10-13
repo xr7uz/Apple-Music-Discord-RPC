@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { Track } from "../src/music.ts";
+import type { Track } from "../src/player.ts";
 import { activityChanged, buildActivity, CREDIT, fitText } from "../src/presence.ts";
 
 const track: Track = { id: "A1B2", name: "Midnight Drive", artist: "Neon Coast", album: "Afterglow", duration: 211.5 };
@@ -79,6 +79,22 @@ describe("buildActivity", () => {
       { label: "Search on YouTube Music", url: "https://music.youtube.com/search?q=Midnight%20Drive%20Neon%20Coast" },
     ]);
     assert.equal(activity.details_url, undefined);
+  });
+
+  it("takes the catalog duration when the player has none", () => {
+    const noDuration = { ...track, duration: undefined };
+    const activity = buildActivity({ track: noDuration, state: "playing", position: 10, extras: { durationMs: 200_000 }, buttons: [], now });
+    assert.deepEqual(activity.timestamps, { start: now - 10_000, end: now - 10_000 + 200_000 });
+  });
+
+  it("has no progress bar while the position is unknown", () => {
+    const activity = buildActivity({ track, state: "playing", position: undefined, extras, buttons: [], now });
+    assert.equal(activity.timestamps, undefined);
+  });
+
+  it("wraps an estimated position that ran past the end", () => {
+    const activity = buildActivity({ track: { ...track, duration: 100 }, state: "playing", position: 130, extras: {}, buttons: [], now });
+    assert.deepEqual(activity.timestamps, { start: now - 30_000, end: now - 30_000 + 100_000 });
   });
 
   it("only shows the credit badge on top of a cover", () => {

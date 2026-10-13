@@ -1,9 +1,23 @@
-/** Minimal timestamped logger. stdout/stderr end up in the launch agent log file. */
+/** Minimal timestamped logger. Writes to stdout/stderr, or to a file when one is set. */
+import { appendFileSync, mkdirSync, renameSync, statSync } from "node:fs";
+import { dirname } from "node:path";
 
 let debugEnabled = false;
+let logFile: string | undefined;
 
 export function setDebug(enabled: boolean): void {
   debugEnabled = enabled;
+}
+
+/** Sends all output to `path`, keeping the previous file as .old once it passes 1 MB. */
+export function setLogFile(path: string): void {
+  mkdirSync(dirname(path), { recursive: true });
+  try {
+    if (statSync(path).size > 1024 * 1024) renameSync(path, `${path}.old`);
+  } catch {
+    // no log yet
+  }
+  logFile = path;
 }
 
 function stamp(): string {
@@ -18,7 +32,16 @@ function format(value: unknown): string {
 }
 
 function write(stream: NodeJS.WriteStream, level: string, parts: unknown[]): void {
-  stream.write(`${stamp()} ${level} ${parts.map(format).join(" ")}\n`);
+  const line = `${stamp()} ${level} ${parts.map(format).join(" ")}\n`;
+  if (logFile) {
+    try {
+      appendFileSync(logFile, line);
+      return;
+    } catch {
+      // fall back to the stream
+    }
+  }
+  stream.write(line);
 }
 
 export const log = {

@@ -2,7 +2,6 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { exportArtwork, type PlayerApp } from "./music.ts";
 
 const LITTERBOX_API = "https://litterbox.catbox.moe/resources/internals/api.php";
 const LITTERBOX_TTL_MS = 60 * 60 * 1000;
@@ -42,11 +41,13 @@ export async function uploadToLitterbox(bytes: Uint8Array, fetchImpl: typeof fet
 }
 
 /** Exports the current track's artwork and uploads it. Undefined if the track has none. */
-export async function uploadLocalArtwork(app: PlayerApp): Promise<UploadedArtwork | undefined> {
+export async function uploadLocalArtwork(
+  exportArtwork: (outPath: string) => Promise<boolean>,
+): Promise<UploadedArtwork | undefined> {
   const dir = await mkdtemp(join(tmpdir(), "music-rpc-"));
   try {
     const file = join(dir, "artwork");
-    if (!(await exportArtwork(app, file))) return undefined;
+    if (!(await exportArtwork(file))) return undefined;
     return await uploadToLitterbox(await readFile(file));
   } finally {
     await rm(dir, { recursive: true, force: true });
