@@ -39,6 +39,7 @@ Written from scratch, inspired by [NextFire/apple-music-discord-rpc](https://git
 - **any client** — Discord, PTB, Canary, Vesktop and other arRPC clients
 - **lightweight** — one Node process, cached lookups, polls slower while nothing plays
 - **set & forget** — starts at login through launchd and restarts itself if anything breaks
+- **signed** — small badge on the cover, hover shows *made by xr7uz*, click opens this repo
 
 <br>
 

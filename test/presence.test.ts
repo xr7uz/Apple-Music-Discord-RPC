@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Track } from "../src/music.ts";
-import { activityChanged, buildActivity, fitText } from "../src/presence.ts";
+import { activityChanged, buildActivity, CREDIT, fitText } from "../src/presence.ts";
 
 const track: Track = { id: "A1B2", name: "Midnight Drive", artist: "Neon Coast", album: "Afterglow", duration: 211.5 };
 const extras = {
@@ -45,7 +45,14 @@ describe("buildActivity", () => {
       state: "Neon Coast",
       state_url: extras.artistUrl,
       timestamps: { start: now - 30_000, end: now - 30_000 + 211_500 },
-      assets: { large_image: extras.artworkUrl, large_text: "Afterglow", large_url: extras.albumUrl },
+      assets: {
+        large_image: extras.artworkUrl,
+        large_text: "Afterglow",
+        large_url: extras.albumUrl,
+        small_image: CREDIT.image,
+        small_text: "made by xr7uz",
+        small_url: CREDIT.url,
+      },
       buttons: [
         { label: "Listen on Apple Music", url: extras.trackUrl },
         { label: "Search on Spotify", url: "https://open.spotify.com/search/Midnight%20Drive%20Neon%20Coast" },
@@ -72,6 +79,11 @@ describe("buildActivity", () => {
       { label: "Search on YouTube Music", url: "https://music.youtube.com/search?q=Midnight%20Drive%20Neon%20Coast" },
     ]);
     assert.equal(activity.details_url, undefined);
+  });
+
+  it("only shows the credit badge on top of a cover", () => {
+    const activity = buildActivity({ track, state: "playing", position: 0, extras: {}, buttons: [], now });
+    assert.deepEqual(activity.assets, { large_image: undefined, large_text: "Afterglow", large_url: undefined });
   });
 
   it("leaves state empty for tracks without an artist", () => {

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="460" height="214" viewBox="0 0 460 214" role="img" aria-label="Discord presence preview: listening to Midnight Drive by Neon Coast">
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="214" viewBox="0 0 460 214" role="img" aria-label="Discord presence preview: listening to Midnight Drive by Neon Coast, with a made by xr7uz badge">
   <defs>
     <linearGradient id="art" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fa2d48"/>
@@ -7,6 +7,9 @@
     </linearGradient>
     <clipPath id="artClip">
       <rect x="20" y="50" width="96" height="96" rx="10"/>
+    </clipPath>
+    <clipPath id="badgeClip">
+      <circle cx="110" cy="140" r="12"/>
     </clipPath>
   </defs>
 
@@ -37,6 +40,10 @@
     <rect x="90" y="70" width="3.5" height="42"/>
     <path d="M64 76 L93.5 70 L93.5 78 L64 84 Z"/>
   </g>
+
+  <!-- made by xr7uz badge -->
+  <circle cx="110" cy="140" r="15" fill="#111214"/>
+  <image href="data:image/jpeg;base64,/9j/2wCEAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDIBCQkJDAsMGA0NGDIhHCEyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMv/AABEIADAAMAMBIgACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/AOV1DxdodzYvaWv26WSdTH+9OFXPGT8xroG/s37HFeRyxSS3CKGiKKGOQOuPoa8t8Rzafca9dT6UGFnI2+NWXBGecYq14XsGvtQnnfcUtYGk3ejdF/U5/CgDd1HxOdNn+wq9xF5KhQ6IjbxyQ3zD0IH4VTXxXbysPtE10Ser/ZoiT+orI8TQNBrLB53mdkDMz9Qe4rGoA7e58W6ERHFFo00wVQHnaUROzdztAIFI/iDw66gI2sJ6qfLI/wAa67w1ocOoeFLWJLSwjeSHc02wMWUjkH3zn/61U/DmkaHBod7puoS2s5e8ckORvUKowAeueV6d8igDlPDej6DcaLcanrMt1tjkMCxwY5YpkMc9hgn3rT+H8RbQteYj5cxDOOuN/wDiKo64LbQ/DFrpFtJ5jXiC6nk2/ebICgZ6DGfc49zWFomvXWiTSGH54JhtmgY/K4/ofegD0LT4tEuLrUZ9X01ZWM7uJZEYhIlwM9OQD1IzjI9RU0g8JWiXV2+nWX9nQKoWU2+55ZDn5VHQ9M9e/pyfMtW1NtS1CW5RGiRwF2bs8e54zzVzXPFF9rtrZ2s+1Le1RVVF/iYDBY+/8qAO00LxjpRe5tIdumWe0sJJCMqSeQijjjJx1rm9O8W2ula7dXUWmpPayT7lDOQ5QcAE8/X8TXKUlAG74vuBL4kurdAoitG+zIF6YT5fU9wawx15pXd5ZWdyWdzkk9STXZeLvAP/AAjEFvKNWtJXeIPJbSSLHMh74XPzD3/SgDndHOlLcZ1eS7+zA5aG2UZk4OPmJwDz6GqEzRtNI0SFIyxKKTkqM8DPer+h2Njf6nHDqGox2NuT80jqTkegwCB9TxXpF18O/DmsacH8O6ijSx5DOkvmhj6MM8H6YoA8mpKfNE8E0kMi7ZI2Ksp7EHBFWtK0i/1u+Sz062e4nb+FR0HqT2HuaAP/2Q==" x="98" y="128" width="24" height="24" clip-path="url(#badgeClip)"/>
 
   <text x="132" y="72" class="title">Midnight Drive</text>
   <text x="132" y="94" class="text">Neon Coast</text>

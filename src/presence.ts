@@ -4,6 +4,13 @@ import { type Activity, ActivityType, StatusDisplay } from "./discord.ts";
 import { cleanTitle, type TrackExtras } from "./lookup.ts";
 import type { Track } from "./music.ts";
 
+/** Small round badge on the cover: hovering shows the text, clicking opens the repo. */
+export const CREDIT = {
+  image: "https://avatars.githubusercontent.com/u/169024839?v=4",
+  text: "made by xr7uz",
+  url: "https://github.com/xr7uz/Apple-Music-Discord-RPC",
+} as const;
+
 const TEXT_MIN = 2;
 const TEXT_MAX = 128;
 const URL_MAX = 512;
@@ -11,7 +18,7 @@ const URL_MAX = 512;
 /** Discord rejects text fields shorter than 2 or longer than 128 characters. */
 export function fitText(value: string, max = TEXT_MAX): string {
   const text = value.trim();
-  if (text.length < TEXT_MIN) return text.padEnd(TEXT_MIN, "⠀");
+  if (text.length < TEXT_MIN) return text.padEnd(TEXT_MIN, "\u2800"); // braille blank, Discord trims spaces
   if (text.length <= max) return text;
   // cut on code points so emoji / surrogate pairs never get split
   let out = "";
@@ -83,6 +90,12 @@ export function buildActivity({ track, state, position, extras, buttons, now = D
       large_text: track.album ? fitText(track.album) : undefined,
       large_url: validUrl(extras.albumUrl),
     };
+    // without a cover Discord would show the badge in its place
+    if (artwork) {
+      activity.assets.small_image = CREDIT.image;
+      activity.assets.small_text = CREDIT.text;
+      activity.assets.small_url = CREDIT.url;
+    }
   }
 
   const shown = buttons
