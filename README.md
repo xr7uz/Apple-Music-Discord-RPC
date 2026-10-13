@@ -76,7 +76,7 @@ Done — it runs hidden in the background and starts with Windows.
 | --- | --- |
 | update | `git pull` then run the install line again |
 | uninstall | `powershell -ExecutionPolicy Bypass -File scripts\uninstall.ps1` |
-| logs | `Get-Content "$env:LOCALAPPDATA\apple-music-discord-rpc\music-rpc.log" -Wait -Tail 30` |
+| logs | `Get-Content "$env:LOCALAPPDATA\apple-music-discord-rpc\music-rpc.log" -Encoding UTF8 -Wait -Tail 30` |
 | config | `copy .env.example .env`, edit, run the install line again |
 | run in a window | `npm start` |
 
